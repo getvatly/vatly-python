@@ -16,7 +16,9 @@ from vatly import Vatly
 vatly = Vatly("vtly_live_...")
 
 result = vatly.vat.validate("NL123456789B01")
-print(result.data.valid, result.data.company.name)
+print(result.data.valid)  # True
+if result.data.company:
+    print(result.data.company.name)
 ```
 
 ## Usage

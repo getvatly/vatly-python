@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from vatly import (
     BatchErrorDetail,
     BatchErrorMeta,
@@ -9,6 +11,7 @@ from vatly import (
     BatchSummary,
     Company,
     ResponseMeta,
+    VatlyError,
     VatRate,
     VatValidationResult,
     is_batch_success,
@@ -173,3 +176,58 @@ class TestVatRate:
         assert len(r.other_rates) == 2
         assert r.other_rates[0].rate == 9
         assert r.other_rates[0].type == "reduced"
+
+
+class TestFromDictMissingRequiredField:
+    def test_company_missing_name(self) -> None:
+        with pytest.raises(VatlyError) as exc_info:
+            Company.from_dict({})
+        assert exc_info.value.code == "parse_error"
+        assert "name" in exc_info.value.message
+
+    def test_validation_result_missing_valid(self) -> None:
+        with pytest.raises(VatlyError) as exc_info:
+            VatValidationResult.from_dict({"vat_number": "NL123", "country_code": "NL"})
+        assert exc_info.value.code == "parse_error"
+        assert "valid" in exc_info.value.message
+
+    def test_response_meta_missing_request_id(self) -> None:
+        with pytest.raises(VatlyError) as exc_info:
+            ResponseMeta.from_dict({})
+        assert exc_info.value.code == "parse_error"
+        assert "request_id" in exc_info.value.message
+
+    def test_batch_summary_missing_total(self) -> None:
+        with pytest.raises(VatlyError) as exc_info:
+            BatchSummary.from_dict({"succeeded": 1, "failed": 0})
+        assert exc_info.value.code == "parse_error"
+        assert "total" in exc_info.value.message
+
+    def test_vat_rate_missing_country_code(self) -> None:
+        with pytest.raises(VatlyError) as exc_info:
+            VatRate.from_dict({"country_name": "NL", "currency": "EUR"})
+        assert exc_info.value.code == "parse_error"
+
+
+class TestFromDictExtraFields:
+    def test_validation_result_ignores_extra_fields(self) -> None:
+        r = VatValidationResult.from_dict(
+            {
+                "valid": True,
+                "vat_number": "NL123456789B01",
+                "country_code": "NL",
+                "company": None,
+                "consultation_number": None,
+                "requested_at": "2026-03-18T12:00:00Z",
+                "future_field": "ignored",
+            }
+        )
+        assert r.valid is True
+
+    def test_response_meta_ignores_extra_fields(self) -> None:
+        m = ResponseMeta.from_dict({"request_id": "req_123", "new_feature": True, "extra": 42})
+        assert m.request_id == "req_123"
+
+    def test_company_ignores_extra_fields(self) -> None:
+        c = Company.from_dict({"name": "Test BV", "address": "NL", "extra": "ignored"})
+        assert c.name == "Test BV"

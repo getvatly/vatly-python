@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0
+
+Type safety, robustness, and test coverage improvements.
+
+- `is_batch_success()` now returns `TypeGuard[BatchResultSuccess]` for proper type narrowing
+- `source_status` fields use `Literal["live", "unavailable", "degraded"]` instead of `str`
+- `mode` field uses `Literal["test"]` instead of `str`
+- New `SourceStatus` type alias exported for type annotations
+- `from_dict` methods raise `VatlyError(code="parse_error")` with a descriptive message instead of raw `KeyError` on missing required fields
+- Fixed quick start README example to handle `company` being `None`
+- Added tests for batch network errors, non-JSON error responses, Content-Type header, async rates errors, forward-compatible deserialization, and missing required fields
+- Removed unused test fixtures
+
 ## 0.1.0
 
 Initial release.

@@ -1,7 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+
+
+def _require_key(data: Dict[str, Any], key: str, context: str) -> Any:
+    try:
+        return data[key]
+    except KeyError:
+        from vatly._errors import VatlyError
+
+        raise VatlyError(
+            f"Missing required field '{key}' in {context} response",
+            code="parse_error",
+            status_code=0,
+        )
 
 
 @dataclass
@@ -11,7 +27,10 @@ class Company:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Company:
-        return cls(name=data["name"], address=data.get("address"))
+        return cls(
+            name=_require_key(data, "name", "Company"),
+            address=data.get("address"),
+        )
 
 
 @dataclass
@@ -28,13 +47,16 @@ class VatValidationResult:
         company_data = data.get("company")
         company = Company.from_dict(company_data) if company_data is not None else None
         return cls(
-            valid=data["valid"],
-            vat_number=data["vat_number"],
-            country_code=data["country_code"],
+            valid=_require_key(data, "valid", "VatValidationResult"),
+            vat_number=_require_key(data, "vat_number", "VatValidationResult"),
+            country_code=_require_key(data, "country_code", "VatValidationResult"),
             company=company,
             consultation_number=data.get("consultation_number"),
-            requested_at=data["requested_at"],
+            requested_at=_require_key(data, "requested_at", "VatValidationResult"),
         )
+
+
+SourceStatus = Literal["live", "unavailable", "degraded"]
 
 
 @dataclass
@@ -43,15 +65,15 @@ class ResponseMeta:
     cached: Optional[bool] = None
     cached_at: Optional[str] = None
     stale: Optional[bool] = None
-    source_status: Optional[str] = None
-    mode: Optional[str] = None
+    source_status: Optional[SourceStatus] = None
+    mode: Optional[Literal["test"]] = None
     request_duration_ms: Optional[int] = None
     count: Optional[int] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> ResponseMeta:
         return cls(
-            request_id=data["request_id"],
+            request_id=_require_key(data, "request_id", "ResponseMeta"),
             cached=data.get("cached"),
             cached_at=data.get("cached_at"),
             stale=data.get("stale"),
@@ -84,7 +106,7 @@ class BatchItemMeta:
     cached: Optional[bool]
     cached_at: Optional[str]
     stale: Optional[bool]
-    source_status: Optional[str]
+    source_status: Optional[SourceStatus]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> BatchItemMeta:
@@ -127,18 +149,23 @@ class BatchResultError:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> BatchResultError:
-        error_data = data["error"]
-        meta_data = data["meta"]
+        error_data = _require_key(data, "error", "BatchResultError")
+        meta_data = _require_key(data, "meta", "BatchResultError")
         return cls(
-            error=BatchErrorDetail(code=error_data["code"], message=error_data["message"]),
-            meta=BatchErrorMeta(vat_number=meta_data["vat_number"]),
+            error=BatchErrorDetail(
+                code=_require_key(error_data, "code", "BatchErrorDetail"),
+                message=_require_key(error_data, "message", "BatchErrorDetail"),
+            ),
+            meta=BatchErrorMeta(
+                vat_number=_require_key(meta_data, "vat_number", "BatchErrorMeta"),
+            ),
         )
 
 
 BatchResult = Union[BatchResultSuccess, BatchResultError]
 
 
-def is_batch_success(item: BatchResult) -> bool:
+def is_batch_success(item: BatchResult) -> TypeGuard[BatchResultSuccess]:
     """Type guard to check if a batch result item is a success."""
     return isinstance(item, BatchResultSuccess)
 
@@ -151,7 +178,11 @@ class BatchSummary:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> BatchSummary:
-        return cls(total=data["total"], succeeded=data["succeeded"], failed=data["failed"])
+        return cls(
+            total=_require_key(data, "total", "BatchSummary"),
+            succeeded=_require_key(data, "succeeded", "BatchSummary"),
+            failed=_require_key(data, "failed", "BatchSummary"),
+        )
 
 
 @dataclass
@@ -179,14 +210,20 @@ class VatRate:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> VatRate:
-        other_rates = [OtherRate(rate=r["rate"], type=r["type"]) for r in data["other_rates"]]
+        other_rates = [
+            OtherRate(
+                rate=_require_key(r, "rate", "OtherRate"),
+                type=_require_key(r, "type", "OtherRate"),
+            )
+            for r in _require_key(data, "other_rates", "VatRate")
+        ]
         return cls(
-            country_code=data["country_code"],
-            country_name=data["country_name"],
-            currency=data["currency"],
-            standard_rate=data["standard_rate"],
+            country_code=_require_key(data, "country_code", "VatRate"),
+            country_name=_require_key(data, "country_name", "VatRate"),
+            currency=_require_key(data, "currency", "VatRate"),
+            standard_rate=_require_key(data, "standard_rate", "VatRate"),
             other_rates=other_rates,
-            updated_at=data["updated_at"],
+            updated_at=_require_key(data, "updated_at", "VatRate"),
         )
 
 

@@ -12,6 +12,7 @@ from vatly import (
     RateLimitError,
     ValidationError,
     Vatly,
+    VatlyError,
     is_batch_success,
 )
 
@@ -285,4 +286,52 @@ class TestBatchApiErrors:
         with pytest.raises(RateLimitError) as exc_info:
             client.vat.validate_batch(["NL123456789B01"])
         assert exc_info.value.retry_after == 15.0
+        client.close()
+
+
+class TestBatchNetworkErrors:
+    @respx.mock(base_url=BASE_URL)
+    def test_timeout(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.post("/v1/validate/batch").mock(side_effect=httpx.ReadTimeout("timed out"))
+        client = Vatly(MOCK_API_KEY)
+        with pytest.raises(VatlyError) as exc_info:
+            client.vat.validate_batch(["NL123456789B01"])
+        assert exc_info.value.code == "timeout"
+        assert exc_info.value.status_code == 0
+        client.close()
+
+    @respx.mock(base_url=BASE_URL)
+    def test_connection_error(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.post("/v1/validate/batch").mock(
+            side_effect=httpx.ConnectError("connection refused")
+        )
+        client = Vatly(MOCK_API_KEY)
+        with pytest.raises(VatlyError) as exc_info:
+            client.vat.validate_batch(["NL123456789B01"])
+        assert exc_info.value.code == "network_error"
+        client.close()
+
+    @respx.mock(base_url=BASE_URL)
+    def test_non_json_502(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.post("/v1/validate/batch").mock(
+            return_value=httpx.Response(502, text="<html>Bad Gateway</html>")
+        )
+        client = Vatly(MOCK_API_KEY)
+        with pytest.raises(VatlyError) as exc_info:
+            client.vat.validate_batch(["NL123456789B01"])
+        assert exc_info.value.code == "unknown_error"
+        assert exc_info.value.status_code == 502
+        client.close()
+
+
+class TestBatchContentType:
+    @respx.mock(base_url=BASE_URL)
+    def test_sends_json_content_type(self, respx_mock: respx.MockRouter) -> None:
+        route = respx_mock.post("/v1/validate/batch").mock(
+            return_value=httpx.Response(200, json=BATCH_RESPONSE, headers=RATE_LIMIT_HEADERS)
+        )
+        client = Vatly(MOCK_API_KEY)
+        client.vat.validate_batch(["NL123456789B01"])
+        content_type = route.calls[0].request.headers["content-type"]
+        assert "application/json" in content_type
         client.close()

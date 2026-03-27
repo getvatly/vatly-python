@@ -1,12 +1,5 @@
 from __future__ import annotations
 
-from typing import Generator
-
-import pytest
-import respx
-
-from vatly import AsyncVatly, Vatly
-
 MOCK_API_KEY = "vtly_live_test123"
 BASE_URL = "https://api.vatly.dev"
 
@@ -114,22 +107,3 @@ GET_RATE_RESPONSE = {
     },
     "meta": {"request_id": "req_rate_nl"},
 }
-
-
-@pytest.fixture()
-def mock_api() -> Generator[respx.MockRouter, None, None]:
-    with respx.mock(base_url=BASE_URL) as router:
-        yield router
-
-
-@pytest.fixture()
-def client() -> Generator[Vatly, None, None]:
-    c = Vatly(MOCK_API_KEY)
-    yield c
-    c.close()
-
-
-@pytest.fixture()
-def async_client() -> Generator[AsyncVatly, None, None]:
-    c = AsyncVatly(MOCK_API_KEY)
-    yield c

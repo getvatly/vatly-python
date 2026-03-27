@@ -148,6 +148,40 @@ class TestAsyncRates:
             assert exc_info.value.code == "not_found"
 
 
+class TestAsyncRatesErrors:
+    @respx.mock(base_url=BASE_URL)
+    async def test_list_timeout(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.get("/v1/rates").mock(side_effect=httpx.ReadTimeout("timed out"))
+        async with AsyncVatly(MOCK_API_KEY) as client:
+            with pytest.raises(VatlyError) as exc_info:
+                await client.rates.list()
+            assert exc_info.value.code == "timeout"
+
+    @respx.mock(base_url=BASE_URL)
+    async def test_get_timeout(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.get("/v1/rates/NL").mock(side_effect=httpx.ReadTimeout("timed out"))
+        async with AsyncVatly(MOCK_API_KEY) as client:
+            with pytest.raises(VatlyError) as exc_info:
+                await client.rates.get("NL")
+            assert exc_info.value.code == "timeout"
+
+    @respx.mock(base_url=BASE_URL)
+    async def test_list_connection_error(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.get("/v1/rates").mock(side_effect=httpx.ConnectError("refused"))
+        async with AsyncVatly(MOCK_API_KEY) as client:
+            with pytest.raises(VatlyError) as exc_info:
+                await client.rates.list()
+            assert exc_info.value.code == "network_error"
+
+    @respx.mock(base_url=BASE_URL)
+    async def test_get_connection_error(self, respx_mock: respx.MockRouter) -> None:
+        respx_mock.get("/v1/rates/NL").mock(side_effect=httpx.ConnectError("refused"))
+        async with AsyncVatly(MOCK_API_KEY) as client:
+            with pytest.raises(VatlyError) as exc_info:
+                await client.rates.get("NL")
+            assert exc_info.value.code == "network_error"
+
+
 class TestAsyncContextManager:
     async def test_aenter_aexit(self) -> None:
         async with AsyncVatly(MOCK_API_KEY) as client:
