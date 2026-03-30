@@ -239,3 +239,79 @@ class GetRateResponse:
     data: VatRate
     meta: ResponseMeta
     rate_limit: RateLimitInfo
+
+
+@dataclass
+class AsyncValidateData:
+    request_id: str
+    status: str
+    vat_number: str
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> AsyncValidateData:
+        return cls(
+            request_id=_require_key(data, "request_id", "AsyncValidateData"),
+            status=_require_key(data, "status", "AsyncValidateData"),
+            vat_number=_require_key(data, "vat_number", "AsyncValidateData"),
+        )
+
+
+@dataclass
+class AsyncMeta:
+    request_id: str
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> AsyncMeta:
+        return cls(
+            request_id=_require_key(data, "request_id", "AsyncMeta"),
+        )
+
+
+@dataclass
+class AsyncValidateResponse:
+    data: AsyncValidateData
+    meta: AsyncMeta
+    rate_limit: RateLimitInfo
+
+
+@dataclass
+class AsyncBatchRejectedItem:
+    vat_number: str
+    error_code: str
+    error_message: str
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> AsyncBatchRejectedItem:
+        error_data = _require_key(data, "error", "AsyncBatchRejectedItem")
+        return cls(
+            vat_number=_require_key(data, "vat_number", "AsyncBatchRejectedItem"),
+            error_code=_require_key(error_data, "code", "AsyncBatchRejectedItem.error"),
+            error_message=_require_key(error_data, "message", "AsyncBatchRejectedItem.error"),
+        )
+
+
+@dataclass
+class AsyncBatchData:
+    batch_id: Optional[str]
+    status: str
+    total: int
+    accepted: int
+    rejected: List[AsyncBatchRejectedItem]
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> AsyncBatchData:
+        rejected_raw = _require_key(data, "rejected", "AsyncBatchData")
+        return cls(
+            batch_id=data.get("batch_id"),
+            status=_require_key(data, "status", "AsyncBatchData"),
+            total=_require_key(data, "total", "AsyncBatchData"),
+            accepted=_require_key(data, "accepted", "AsyncBatchData"),
+            rejected=[AsyncBatchRejectedItem.from_dict(r) for r in rejected_raw],
+        )
+
+
+@dataclass
+class AsyncBatchValidateResponse:
+    data: AsyncBatchData
+    meta: AsyncMeta
+    rate_limit: RateLimitInfo

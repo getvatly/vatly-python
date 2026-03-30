@@ -5,6 +5,7 @@ from typing import Optional, Type
 
 import httpx
 
+from vatly._async_resources.async_vat import AsyncVatAsyncResource
 from vatly._async_resources.rates import AsyncRatesResource
 from vatly._async_resources.vat import AsyncVatResource
 from vatly._config import VatlyConfig
@@ -15,6 +16,7 @@ class AsyncVatly:
 
     vat: AsyncVatResource
     rates: AsyncRatesResource
+    async_vat: AsyncVatAsyncResource
 
     def __init__(
         self,
@@ -30,6 +32,7 @@ class AsyncVatly:
         )
         self.vat = AsyncVatResource(self._http, self._config)
         self.rates = AsyncRatesResource(self._http, self._config)
+        self.async_vat = AsyncVatAsyncResource(self._http, self._config)
 
     async def close(self) -> None:
         await self._http.aclose()

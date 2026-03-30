@@ -8,6 +8,12 @@ from vatly._errors import (
     VatlyError,
 )
 from vatly._types import (
+    AsyncBatchData,
+    AsyncBatchRejectedItem,
+    AsyncBatchValidateResponse,
+    AsyncMeta,
+    AsyncValidateData,
+    AsyncValidateResponse,
     BatchErrorDetail,
     BatchErrorMeta,
     BatchItemMeta,
@@ -31,6 +37,12 @@ from vatly._types import (
 from vatly._version import __version__
 
 __all__ = [
+    "AsyncBatchData",
+    "AsyncBatchRejectedItem",
+    "AsyncBatchValidateResponse",
+    "AsyncMeta",
+    "AsyncValidateData",
+    "AsyncValidateResponse",
     "AsyncVatly",
     "AuthenticationError",
     "BatchErrorDetail",

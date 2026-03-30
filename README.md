@@ -77,6 +77,34 @@ for item in result.results:
         print(f"{item.meta.vat_number} failed: {item.error.message}")
 ```
 
+### `vatly.async_vat.validate()`
+
+Submit a VAT number for async validation. Results are delivered via [webhook](https://docs.vatly.dev/webhooks). Requires a Pro or Business plan and a configured webhook URL.
+
+```python
+# Sync client
+response = client.async_vat.validate("DE123456789")
+print(response.data.request_id)  # Track this ID
+print(response.data.status)      # "pending"
+
+# Async client
+response = await client.async_vat.validate("DE123456789")
+```
+
+### `vatly.async_vat.validate_batch()`
+
+Submit multiple VAT numbers for async validation.
+
+```python
+response = client.async_vat.validate_batch(
+    ["DE123456789", "NL987654321B01"],
+    requester_vat_number="NL987654321B01",  # optional
+)
+print(response.data.batch_id)   # Track this ID
+print(response.data.accepted)   # Number queued
+print(response.data.rejected)   # Items with invalid format
+```
+
 ### `vatly.rates.list()`
 
 List VAT rates for all supported countries.

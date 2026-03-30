@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+Async validation support.
+
+- `client.async_vat.validate()` and `client.async_vat.validate_batch()` on both `Vatly` and `AsyncVatly`
+- New types: `AsyncValidateData`, `AsyncMeta`, `AsyncValidateResponse`, `AsyncBatchRejectedItem`, `AsyncBatchData`, `AsyncBatchValidateResponse`
+- Async validation requires a Pro or Business plan and a configured webhook URL
+
 ## 0.2.0
 
 Type safety, robustness, and test coverage improvements.

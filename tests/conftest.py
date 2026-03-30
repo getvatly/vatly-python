@@ -107,3 +107,27 @@ GET_RATE_RESPONSE = {
     },
     "meta": {"request_id": "req_rate_nl"},
 }
+
+ASYNC_SINGLE_RESPONSE = {
+    "data": {
+        "request_id": "550e8400-e29b-41d4-a716-446655440000",
+        "status": "pending",
+        "vat_number": "DE123456789",
+    },
+    "meta": {
+        "request_id": "req_async1",
+    },
+}
+
+ASYNC_BATCH_RESPONSE = {
+    "data": {
+        "batch_id": "660e8400-e29b-41d4-a716-446655440000",
+        "status": "pending",
+        "total": 2,
+        "accepted": 2,
+        "rejected": [],
+    },
+    "meta": {
+        "request_id": "req_async_batch1",
+    },
+}
